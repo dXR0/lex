@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #define SIZE 256
+#define PRINT_WHITESPACE 0
 
 // borrowed from tsoding
 const char *shift(int *argc, char ***argv)
@@ -16,10 +17,129 @@ const char *shift(int *argc, char ***argv)
 	return result;
 }
 
+typedef enum {
+	URL= -7,
+	NUMBER = -6,
+	FLOAT= -5,
+	INT = -4,
+	STRING = -3,
+	CHAR = -2,
+	WORD = -1,
+	//
+	TILDE = '~',
+	TICK = '`',
+	EXCLAIM = '!',
+	AT = '@',
+	DQUOTE = '"',
+	QUOTE = '\'',
+	HASH = '#',
+	DOLLAR = '$',
+	PERCENT = '%',
+	CARET = '^',
+	AMPER = '&',
+	STAR = '*',
+	SLASH = '/',
+	BSLASH = '\\',
+	CURLYL = '{',
+	CURLYR = '}',
+	PARENL = '(',
+	PARENR = ')',
+	BRACKETL = '[',
+	BRACKETR = ']',
+	ANGLEL = '<',
+	ANGLER = '>',
+	EQUAL = '=',
+	DASH = '-',
+	UNDERSCORE = '_',
+	PLUS = '+',
+	QUESTION = '?',
+	SCOLON = ';',
+	COLON = ':',
+	PIPE = '|',
+	SPACE = ' ',
+	TAB = '\t',
+	NEWLINE = '\n',
+	DOT = '.',
+	COMMA = ',',
+} TOKEN_NAME;
+
+typedef struct {
+	TOKEN_NAME t;
+	char *v;
+} Token;
+
+void to_string(Token *token){
+	switch (token->t) {
+		case WORD:
+			printf("WORD(%s)\n", token->v);
+			break;
+		case CHAR:
+			printf("CHAR(%s)\n", token->v);
+			break;
+		case STRING:
+			printf("STRING(%s)\n", token->v);
+			break;
+		case INT:
+			printf("INT(%s)\n",token->v);
+			break;
+		case FLOAT:
+			printf("FLOAT(%s)\n",token->v);
+			break;
+		case NUMBER:
+			printf("NUMBER(%s)\n", token->v);
+			break;
+		case URL:
+			printf("URL(%s)\n", token->v);
+			break;
+		case TAB:
+			if (PRINT_WHITESPACE) printf("SYMBOL(\\t)\n");
+			break;
+		case NEWLINE:
+			if (PRINT_WHITESPACE) printf("SYMBOL(\\n)\n");
+			break;
+		case SPACE:
+			if (PRINT_WHITESPACE) printf("SYMBOL(' ')\n");
+			break;
+		default:
+			printf("SYMBOL(%s)\n", token->v);
+	}
+}
+
+void printer(Token **tokens, size_t n)
+{
+	for (int i=0;i<n;i++) {
+		to_string(tokens[i]);
+	}
+}
+
+void freemy(Token **tokens, size_t n)
+{
+	for (int i=0; i<n; ++i) {
+		free(tokens[i]->v);
+		free(tokens[i]);
+	}
+	free(tokens);
+}
+
 // TODO: 
 int lex(char *buf, size_t size)
 {
 	printf("%s\nsize: %d\n", buf, size);
+	if (size == 0) {
+		return 0;
+	}
+
+	Token **tokens = calloc(size, sizeof(Token *));
+	for (int i=0; i< size; ++i) {
+		Token *new = calloc(1, sizeof(Token));
+		new->t = CHAR;
+		char *val = calloc(1, sizeof(char));
+		val[0] = buf[i];
+		new->v = val;
+		tokens[i] = new;
+	}
+	printer(tokens, size);
+	freemy(tokens, size);
 }
 
 int s_isfifo() // piped in

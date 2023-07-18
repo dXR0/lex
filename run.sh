@@ -1,4 +1,4 @@
 #!/bin/sh
 set -xe
-cc -o lex lex.c
+cc -g -o lex lex.c
 cat run.sh | ./lex
