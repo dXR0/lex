@@ -134,10 +134,10 @@ int lex(char *buf, size_t size)
 	int tokens_size = 0;
 	for (int i=0; i < size; ++i) {
 		Token *new = calloc(1, sizeof(Token));
-		new->t = CHAR;
+		new->t = WORD;
 		char *val = calloc(str_size, sizeof(char));
 		if (buf[i] == '"') { // handle strings
-			new->t = WORD;
+			new->t = STRING;
 			int j = 0;
 			char prev = buf[i];
 			++i;
@@ -145,10 +145,10 @@ int lex(char *buf, size_t size)
 			while (((b_i = buf[i]) != '"' && prev != '\\' || b_i == '"' && prev == '\\')  && 
 					b_i != '\0' && b_i != EOF) {
 				if ( b_i == '\\') { // handle slashed chars
-					val[j] = b_i;
-					val[j+1] = buf[i+1];
+					// val[j] = b_i;
+					val[j] = buf[i+1];
 					i += 2;
-					j += 2;
+					j += 1;
 				} else {
 					val[j] = b_i;
 					++j;
@@ -160,6 +160,22 @@ int lex(char *buf, size_t size)
 				}
 			}
 			val = realloc(val, j); // fit the allocation to str size
+		} else if (buf[i] == '\'') {
+			new->t = CHAR;
+			int char_size = 0;
+			if (buf[i+1] == '\'') { // empty char
+				++i;
+			} else if (buf[i+1] == '\\') { // slash literal char
+				val[0] = buf[i+2];
+				// val[1] = buf[i+2];
+				i += 3;
+				char_size = 1;
+			} else {
+				val[0] = buf[i+1];
+				i += 2;
+				char_size = 1;
+			}
+			val = realloc(val, char_size);
 		} else {
 			val[0] = buf[i];
 		}
