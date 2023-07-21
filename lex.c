@@ -130,16 +130,45 @@ int lex(char *buf, size_t size)
 	}
 
 	Token **tokens = calloc(size, sizeof(Token *));
-	for (int i=0; i< size; ++i) {
+	int str_size = SIZE;
+	int tokens_size = 0;
+	for (int i=0; i < size; ++i) {
 		Token *new = calloc(1, sizeof(Token));
 		new->t = CHAR;
-		char *val = calloc(1, sizeof(char));
-		val[0] = buf[i];
+		char *val = calloc(str_size, sizeof(char));
+		if (buf[i] == '"') { // handle strings
+			new->t = WORD;
+			int j = 0;
+			char prev = buf[i];
+			++i;
+			int b_i;
+			while (((b_i = buf[i]) != '"' && prev != '\\' || b_i == '"' && prev == '\\')  && 
+					b_i != '\0' && b_i != EOF) {
+				if ( b_i == '\\') { // handle slashed chars
+					val[j] = b_i;
+					val[j+1] = buf[i+1];
+					i += 2;
+					j += 2;
+				} else {
+					val[j] = b_i;
+					++j;
+					++i;
+				}
+				if ( j >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+			}
+			val = realloc(val, j); // fit the allocation to str size
+		} else {
+			val[0] = buf[i];
+		}
 		new->v = val;
-		tokens[i] = new;
+		tokens[tokens_size] = new;
+		++tokens_size;
 	}
-	printer(tokens, size);
-	freemy(tokens, size);
+	printer(tokens, tokens_size);
+	freemy(tokens, tokens_size);
 }
 
 int s_isfifo() // piped in
