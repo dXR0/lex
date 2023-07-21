@@ -18,6 +18,8 @@ const char *shift(int *argc, char ***argv)
 }
 
 typedef enum {
+	EMAIL = -9,
+	PATH = -8,
 	URL= -7,
 	NUMBER = -6,
 	FLOAT= -5,
@@ -91,14 +93,20 @@ void to_string(Token *token){
 		case URL:
 			printf("URL(%s)\n", token->v);
 			break;
+		case EMAIL:
+			printf("EMAIL(%s)\n", token->v);
+			break;
+		case PATH:
+			printf("PATH(%s)\n", token->v);
+			break;
 		case TAB:
-			if (PRINT_WHITESPACE) printf("SYMBOL(\\t)\n");
+			if (PRINT_WHITESPACE) printf("TAB(\\t)\n");
 			break;
 		case NEWLINE:
-			if (PRINT_WHITESPACE) printf("SYMBOL(\\n)\n");
+			if (PRINT_WHITESPACE) printf("NEWLINE(\\n)\n");
 			break;
 		case SPACE:
-			if (PRINT_WHITESPACE) printf("SYMBOL(' ')\n");
+			if (PRINT_WHITESPACE) printf("SPACE(' ')\n");
 			break;
 		default:
 			printf("SYMBOL(%s)\n", token->v);
@@ -176,8 +184,28 @@ int lex(char *buf, size_t size)
 				char_size = 1;
 			}
 			val = realloc(val, char_size);
+		} else if (buf[i] >= 'a' && buf[i] <= 'z' || buf[i] >= 'A' && buf[i] <= 'Z') {
+			new->t = WORD;
+			char b_i;
+			int j = 0;
+			while ((b_i = buf[i]) != ' ' && b_i != '\n' && 
+					b_i != '.' && b_i != ',' && b_i != ';' && b_i != ':' &&
+					b_i != '\0' && b_i != EOF) {
+				val[j] = b_i;
+				++j;
+				++i;
+				if (j >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+			}
+			if (b_i != '.' || b_i != ',' || b_i != ';' || b_i != ':' ) {
+				--i;
+			}
 		} else {
+			new->t = buf[i];
 			val[0] = buf[i];
+			val = realloc(val, 1);
 		}
 		new->v = val;
 		tokens[tokens_size] = new;
