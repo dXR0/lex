@@ -129,7 +129,6 @@ void freemy(Token **tokens, size_t n)
 	free(tokens);
 }
 
-// TODO: 
 int lex(char *buf, size_t size)
 {
 	printf("%s\nsize: %d\n", buf, size);
@@ -151,7 +150,7 @@ int lex(char *buf, size_t size)
 			++i;
 			int b_i;
 			while (((b_i = buf[i]) != '"' && prev != '\\' || b_i == '"' && prev == '\\')  && 
-					b_i != '\0' && b_i != EOF) {
+					i < size) {
 				if ( b_i == '\\') { // handle slashed chars
 					// val[j] = b_i;
 					val[j] = buf[i+1];
@@ -190,7 +189,7 @@ int lex(char *buf, size_t size)
 			int j = 0;
 			while ((b_i = buf[i]) != ' ' && b_i != '\n' && 
 					b_i != '.' && b_i != ',' && b_i != ';' && b_i != ':' &&
-					b_i != '\0' && b_i != EOF) {
+					i < size) {
 				val[j] = b_i;
 				++j;
 				++i;
@@ -202,6 +201,30 @@ int lex(char *buf, size_t size)
 			if (b_i != '.' || b_i != ',' || b_i != ';' || b_i != ':' ) {
 				--i;
 			}
+		} else if (buf[i] >= '0' && buf[i] <= '9') {
+			char b_i;
+			new->t = INT;
+			int dot_count = 0;
+			int j = 0;
+			do {
+				if (buf[i] == '.') {
+					char b_ip1;
+					if (i+1 < size && !((b_ip1 = buf[i+1]) >= '0' && b_ip1 <= '9')) {
+						break;
+					}
+					if (!dot_count) {
+						new->t = FLOAT;
+					} else {
+						new->t = NUMBER;
+					}
+					++dot_count;
+				}
+				val[j] = buf[i];
+				++i;
+				++j;
+			} while (((b_i = buf[i]) >= '0' && b_i <= '9' || b_i == '.') && i < size);
+			--i;
+			val = realloc(val, j);			
 		} else {
 			new->t = buf[i];
 			val[0] = buf[i];
