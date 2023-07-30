@@ -131,7 +131,6 @@ void freemy(Token **tokens, size_t n)
 
 int lex(char *buf, size_t size)
 {
-	printf("%s\nsize: %d\n", buf, size);
 	if (size == 0) {
 		return 0;
 	}
