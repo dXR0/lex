@@ -18,9 +18,9 @@ const char *shift(int *argc, char ***argv)
 }
 
 typedef enum {
-	EMAIL = -9,
-	PATH = -8,
-	URL= -7,
+	// EMAIL = -9,
+	// PATH = -8,
+	// URL= -7,
 	NUMBER = -6,
 	FLOAT= -5,
 	INT = -4,
@@ -90,15 +90,15 @@ void to_string(Token *token){
 		case NUMBER:
 			printf("NUMBER(%s)\n", token->v);
 			break;
-		case URL:
-			printf("URL(%s)\n", token->v);
-			break;
-		case EMAIL:
-			printf("EMAIL(%s)\n", token->v);
-			break;
-		case PATH:
-			printf("PATH(%s)\n", token->v);
-			break;
+// 		case URL:
+// 			printf("URL(%s)\n", token->v);
+// 			break;
+// 		case EMAIL:
+// 			printf("EMAIL(%s)\n", token->v);
+// 			break;
+// 		case PATH:
+// 			printf("PATH(%s)\n", token->v);
+// 			break;
 		case TAB:
 			if (PRINT_WHITESPACE) printf("TAB(\\t)\n");
 			break;

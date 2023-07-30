@@ -8,3 +8,5 @@ cat run.sh | ./lex
 # '' 't' '\\' '\'' '"' '\\' '@' ' '
 # test. test test.test .
 # 1 13 100. 3.14 127.0.0.1 3.14...
+# https://google.com
+# example@example.com 
