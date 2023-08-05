@@ -188,6 +188,7 @@ int lex(char *buf, size_t size)
 			int j = 0;
 			while ((b_i = buf[i]) != ' ' && b_i != '\n' && 
 					b_i != '.' && b_i != ',' && b_i != ';' && b_i != ':' &&
+					b_i != '(' && b_i != ')' && b_i != '[' && b_i != ']' && b_i != '{' && b_i != '}' &&
 					i < size) {
 				val[j] = b_i;
 				++j;
