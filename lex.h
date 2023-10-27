@@ -168,17 +168,22 @@ Token **lex(char *buf, size_t size, size_t *token_count) {
 			int b_i;
 			while (((b_i = buf[i]) != '"' && prev != '\\' || b_i == '"' && prev == '\\')  && 
 					i < size) {
-				if ( b_i == '\\') { // handle slashed chars
-					// val[j] = b_i;
-					val[j] = buf[i+1];
+				if (b_i == '\\') { // handle slashed chars
+					// TODO: check that `i+1 < size`
+					// // val[j] = b_i;
+					// val[j] = buf[i+1];
+					// i += 2;
+					// j += 1;
+					val[j] = b_i;
+					val[j+1] = buf[i+1];
 					i += 2;
-					j += 1;
+					j += 2;
 				} else {
 					val[j] = b_i;
 					++j;
 					++i;
 				}
-				if ( j >= str_size) {
+				if (j >= str_size) {
 					str_size *= 2;
 					val = realloc(val, str_size);
 				}
@@ -330,6 +335,22 @@ Token **w_args(int argc, char **argv, size_t *token_count) {
 	}
 	Token **tokens = lex(buf, i, token_count);
 	free(buf);
+	return tokens;
+}
+
+Token **file(char *filename, size_t *token_count) { // file from filename
+        FILE *fptr = fopen(filename, "r");
+	if (fptr == NULL) {
+		return NULL;
+	}
+        fseek(fptr, 0, SEEK_END);
+        int size = ftell(fptr);
+        rewind(fptr);
+        char *buf = calloc(size, sizeof(char));
+        fread(buf, sizeof(char), size, fptr);
+        fclose(fptr);
+        Token **tokens = lex(buf, size, token_count);
+        free(buf);
 	return tokens;
 }
 
