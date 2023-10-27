@@ -163,17 +163,10 @@ Token **lex(char *buf, size_t size, size_t *token_count) {
 		if (buf[i] == '"') { // handle strings
 			new->t = STRING;
 			int j = 0;
-			char prev = buf[i];
 			++i;
 			int b_i;
-			while (((b_i = buf[i]) != '"' && prev != '\\' || b_i == '"' && prev == '\\')  && 
-					i < size) {
-				if (b_i == '\\') { // handle slashed chars
-					// TODO: check that `i+1 < size`
-					// // val[j] = b_i;
-					// val[j] = buf[i+1];
-					// i += 2;
-					// j += 1;
+			while (((b_i = buf[i]) != '"')  && i < size) {
+				if (b_i == '\\' && (i+1) < size) { // handle slashed chars
 					val[j] = b_i;
 					val[j+1] = buf[i+1];
 					i += 2;
@@ -192,14 +185,14 @@ Token **lex(char *buf, size_t size, size_t *token_count) {
 		} else if (buf[i] == '\'') {
 			new->t = CHAR;
 			int char_size = 0;
-			if (buf[i+1] == '\'') { // empty char
+			if (buf[i+1] == '\'' && (i+1) < size) { // empty char
 				++i;
-			} else if (buf[i+1] == '\\') { // slash literal char
+			} else if (buf[i+1] == '\\' && (i+2) < size) { // slash literal char
 				val[0] = buf[i+2];
 				// val[1] = buf[i+2];
 				i += 3;
 				char_size = 1;
-			} else {
+			} else if (i+1 < size) {
 				val[0] = buf[i+1];
 				i += 2;
 				char_size = 1;
