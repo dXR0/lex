@@ -186,6 +186,24 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 			}
 			val = realloc(val, j);
 		} else if (b_i == '\'') { // handle char
+			new->t = LEX_CHAR;
+			++i;
+			++col;
+			int j = 0;
+			int escaped = 0;
+			while (i < buf_counter && ((b_i = buf[i]) != '\'' || b_i == '\'' && escaped)) {
+				val[j] = b_i;
+				++j;
+				++i;
+				++col;
+				if (j >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+				int is_slash = b_i == '\\';
+				escaped = is_slash * (is_slash ^ escaped);
+			}
+			val = realloc(val, j);
 		} else if (b_i >= 'A' && b_i <= 'Z' || b_i >= 'a' && b_i <= 'z') { // handle word
 		} else if (b_i >= '0' && b_i <= '9') { // handle int/float/number
 		} else { // handle symbol
