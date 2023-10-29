@@ -76,6 +76,7 @@ static const char *LEX_TOKEN_NAMES[] = {
 typedef struct {
 	enum LEX_TOKEN_TYPE t;
 	char *v;
+	int vlen;
 	char *fname;
 	int row;
 	int col;
@@ -134,7 +135,7 @@ char *bufferize(FILE *stream, size_t *buf_counter) {
 }
 
 void string(lex_token *token) {
-		printf("%s:%d:%d %s(%s)\n", token->fname, token->row, token->col, LEX_TOKEN_NAMES[token->t], token->v);
+		printf("%s:%d:%d %s(%s)(%d)\n", token->fname, token->row, token->col, LEX_TOKEN_NAMES[token->t], token->v, token->vlen);
 }
 
 void print(lex_token **token, int token_count) {
@@ -166,6 +167,7 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 		new->row = row;
 		new->col = col;
 		char b_i = buf[i];
+		int vlen = 0;
 		if (b_i == '"') { // handle string
 			new->t = LEX_STRING;
 			++i;
@@ -185,6 +187,7 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 				escaped = is_slash * (is_slash ^ escaped);
 			}
 			val = realloc(val, j);
+			vlen = j;
 		} else if (b_i == '\'') { // handle char
 			new->t = LEX_CHAR;
 			++i;
@@ -204,11 +207,13 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 				escaped = is_slash * (is_slash ^ escaped);
 			}
 			val = realloc(val, j);
+			vlen = j;
 		} else if (b_i >= 'A' && b_i <= 'Z' || b_i >= 'a' && b_i <= 'z') { // handle word
 		} else if (b_i >= '0' && b_i <= '9') { // handle int/float/number
 		} else { // handle symbol
 		}
 		new->v = val;
+		new->vlen = vlen;
 		tokens[tok_count] = new;
 		++tok_count;
 	}
