@@ -1,85 +1,20 @@
-#ifndef LEX_H_
-#define LEX_H_
+#pragma once
 
-#include <stddef.h>
-
-typedef enum {
-	// EMAIL = -9,
-	// PATH = -8,
-	// URL= -7,
-	NUMBER = -6,
-	FLOAT= -5,
-	INT = -4,
-	STRING = -3,
-	CHAR = -2,
-	WORD = -1,
-	//
-	TILDE = '~',
-	TICK = '`',
-	EXCLAIM = '!',
-	AT = '@',
-	DQUOTE = '"',
-	QUOTE = '\'',
-	HASH = '#',
-	DOLLAR = '$',
-	PERCENT = '%',
-	CARET = '^',
-	AMPER = '&',
-	STAR = '*',
-	SLASH = '/',
-	BSLASH = '\\',
-	CURLYL = '{',
-	CURLYR = '}',
-	PARENL = '(',
-	PARENR = ')',
-	BRACKETL = '[',
-	BRACKETR = ']',
-	ANGLEL = '<',
-	ANGLER = '>',
-	EQUAL = '=',
-	DASH = '-',
-	UNDERSCORE = '_',
-	PLUS = '+',
-	QUESTION = '?',
-	SCOLON = ';',
-	COLON = ':',
-	PIPE = '|',
-	SPACE = ' ',
-	TAB = '\t',
-	NEWLINE = '\n',
-	DOT = '.',
-	COMMA = ',',
-} TOKEN_NAME;
-
-typedef struct {
-	TOKEN_NAME t;
-	char *v;
-} Token;
-
-char *shift(int *argc, char ***argv);
-
-void to_string(Token *token);
-void printer(Token **tokens, size_t n);
-void freemy(Token **tokens, size_t n);
-Token **lex(char *buf, size_t size, size_t *token_count);
-Token **s_isfifo(size_t *token_count); // piped in
-Token **s_ischr(size_t *token_count); // REPL - needs to be called in a loop
-Token **s_isreg(size_t *token_count); // file directed as stdin, eg ./a.out < file
-Token **w_args(int argc, char **argv, size_t *token_count); // cmdline args
-
-#endif // LEX_H_
-
-
-
-#ifndef LEX_IMPLEMENTATION
-#define LEX_IMPLEMENTATION
+#ifndef TOOLBOXC_H_
+#define TOOLBOXC_H_
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
 
-#define SIZE 256
-#define PRINT_WHITESPACE 0
+char *shift(int *argc, char ***argv);
+size_t mystrlen(char *s1);
+int mystrcomp(char *s1, char *s2);
+
+#endif // TOOLBOXC_H_
+
+#ifndef TOOLBOXC_IMPLEMENTATION
+#define TOOLBOXC_IMPLEMENTATION
+
+#include <stdio.h>
 
 char *shift(int *argc, char ***argv) {
 	if (*argc <= 0) {
@@ -91,56 +26,79 @@ char *shift(int *argc, char ***argv) {
 	return result;
 }
 
-void to_string(Token *token) {
-	switch (token->t) {
-		case WORD:
-			printf("WORD(%s)\n", token->v);
-			break;
-		case CHAR:
-			printf("CHAR(%s)\n", token->v);
-			break;
-		case STRING:
-			printf("STRING(%s)\n", token->v);
-			break;
-		case INT:
-			printf("INT(%s)\n",token->v);
-			break;
-		case FLOAT:
-			printf("FLOAT(%s)\n",token->v);
-			break;
-		case NUMBER:
-			printf("NUMBER(%s)\n", token->v);
-			break;
-// 		case URL:
-// 			printf("URL(%s)\n", token->v);
-// 			break;
-// 		case EMAIL:
-// 			printf("EMAIL(%s)\n", token->v);
-// 			break;
-// 		case PATH:
-// 			printf("PATH(%s)\n", token->v);
-// 			break;
-		case TAB:
-			if (PRINT_WHITESPACE) printf("TAB(\\t)\n");
-			break;
-		case NEWLINE:
-			if (PRINT_WHITESPACE) printf("NEWLINE(\\n)\n");
-			break;
-		case SPACE:
-			if (PRINT_WHITESPACE) printf("SPACE(' ')\n");
-			break;
-		default:
-			printf("SYMBOL(%s)\n", token->v);
+size_t mystrlen(char *s1) {
+	char *s1c = s1;
+	size_t size = 0;
+	while (*(s1c++) != '\0') {
+		++size;
 	}
+	return size;
 }
 
-void printer(Token **tokens, size_t n) {
-	for (int i=0;i<n;i++) {
-		to_string(tokens[i]);
+int mystrcomp(char *s1, char *s2) {
+	char *s1c = s1;
+	char *s2c = s2;
+	while (*s1c != '\0' && *s2c != '\0') {
+		if (*s1c != *s2c) {
+			break;
+		}
+		++s1c;
+		++s2c;
 	}
+	return *s1c == *s2c;
 }
 
-void freemy(Token **tokens, size_t n) {
+#endif // TOOLBOXC_IMPLEMENTATION
+
+#ifndef LEX_H_
+#define LEX_H_
+
+enum LEX_TOKEN_TYPE {
+	LEX_SYMBOL = 0,
+	LEX_WORD,
+	LEX_INT,
+	LEX_CHAR,
+	LEX_STRING,
+	LEX_TOKEN_COUNT
+};
+
+static const char *LEX_TOKEN_NAMES[] = {
+	"SYMBOL",
+	"WORD",
+	"INT",
+	"CHAR",
+	"STRING"
+};
+
+typedef struct {
+	enum LEX_TOKEN_TYPE t;
+	char *v;
+	int vlen;
+	char *fname;
+	int row;
+	int col;
+} lex_token;
+
+void lex_free(lex_token **tokens, size_t n);
+void string(lex_token *token);
+void print(lex_token **token, int token_count);
+char *bufferize(FILE *stream, size_t *buf_counter);
+lex_token **tokenize(FILE *stream, size_t *token_counter);
+
+
+#endif // LEX_H_
+
+#ifdef LEX_IMPLEMENTATION
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+
+#define LEX_SIZE 256
+char *LEX_FNAME = "stdin";
+
+
+void lex_free(lex_token **tokens, size_t n) {
 	for (int i=0; i<n; ++i) {
 		free(tokens[i]->v);
 		free(tokens[i]);
@@ -148,203 +106,163 @@ void freemy(Token **tokens, size_t n) {
 	free(tokens);
 }
 
-Token **lex(char *buf, size_t size, size_t *token_count) {
-	if (size == 0) {
-		return 0;
-	}
+void string(lex_token *token) {
+		printf("%s:%d:%d %s(%s)(%d)\n", token->fname, token->row, token->col, LEX_TOKEN_NAMES[token->t], token->v, token->vlen);
+}
 
-	Token **tokens = calloc(size, sizeof(Token *));
-	int str_size = SIZE;
-	int tokens_size = 0;
-	for (int i=0; i < size; ++i) {
-		Token *new = calloc(1, sizeof(Token));
-		new->t = WORD;
-		char *val = calloc(str_size, sizeof(char));
-		if (buf[i] == '"') { // handle strings
-			new->t = STRING;
-			int j = 0;
+void print(lex_token **token, int token_count) {
+	for (int i=0; i< token_count; ++i) {
+		string(token[i]);
+	}
+}
+
+char *bufferize(FILE *stream, size_t *buf_counter) {
+	struct stat stats;
+	fstat(fileno(stream), &stats);
+	int stats_mode = stats.st_mode;
+	char *buf;
+	if (S_ISREG(stats_mode) || S_ISFIFO(stats_mode)) {
+		size_t size = LEX_SIZE;
+		buf = calloc(LEX_SIZE, sizeof(char));
+		char c;
+		size_t i = 0;
+		while ((c = fgetc(stream)) != EOF) {
+			buf[i] = c;
 			++i;
-			int b_i;
-			while (((b_i = buf[i]) != '"')  && i < size) {
-				if (b_i == '\\' && (i+1) < size) { // handle slashed chars
-					val[j] = b_i;
-					val[j+1] = buf[i+1];
-					i += 2;
-					j += 2;
-				} else {
-					val[j] = b_i;
-					++j;
-					++i;
-				}
-				if (j >= str_size) {
-					str_size *= 2;
-					val = realloc(val, str_size);
-				}
-			}
-			val = realloc(val, j); // fit the allocation to str size
-		} else if (buf[i] == '\'') {
-			new->t = CHAR;
-			int char_size = 0;
-			if (buf[i+1] == '\'' && (i+1) < size) { // empty char
-				++i;
-			} else if (buf[i+1] == '\\' && (i+2) < size) { // slash literal char
-				val[0] = buf[i+2];
-				// val[1] = buf[i+2];
-				i += 3;
-				char_size = 1;
-			} else if (i+1 < size) {
-				val[0] = buf[i+1];
-				i += 2;
-				char_size = 1;
-			}
-			val = realloc(val, char_size);
-		} else if (buf[i] >= 'a' && buf[i] <= 'z' || buf[i] >= 'A' && buf[i] <= 'Z') {
-			new->t = WORD;
-			char b_i;
-			int j = 0;
-			while ((b_i = buf[i]) != ' ' && b_i != '\n' && 
-					b_i != '.' && b_i != ',' && b_i != ';' && b_i != ':' &&
-					b_i != '(' && b_i != ')' && b_i != '[' && b_i != ']' && b_i != '{' && b_i != '}' &&
-					i < size) {
-				val[j] = b_i;
-				++j;
-				++i;
-				if (j >= str_size) {
-					str_size *= 2;
-					val = realloc(val, str_size);
-				}
-			}
-			if (b_i != '.' || b_i != ',' || b_i != ';' || b_i != ':' ) {
-				--i;
-			}
-		} else if (buf[i] >= '0' && buf[i] <= '9') {
-			char b_i;
-			new->t = INT;
-			int dot_count = 0;
-			int j = 0;
-			do {
-				if (buf[i] == '.') {
-					char b_ip1;
-					if (i+1 < size && !((b_ip1 = buf[i+1]) >= '0' && b_ip1 <= '9')) {
-						break;
-					}
-					if (!dot_count) {
-						new->t = FLOAT;
-					} else {
-						new->t = NUMBER;
-					}
-					++dot_count;
-				}
-				val[j] = buf[i];
-				++i;
-				++j;
-			} while (((b_i = buf[i]) >= '0' && b_i <= '9' || b_i == '.') && i < size);
-			--i;
-			val = realloc(val, j);			
-		} else {
-			new->t = buf[i];
-			val[0] = buf[i];
-			val = realloc(val, 1);
-		}
-		new->v = val;
-		tokens[tokens_size] = new;
-		++tokens_size;
-	}
-	// printer(tokens, tokens_size);
-	// freemy(tokens, tokens_size);
-	(*token_count) = tokens_size;
-	return tokens;
-}
-
-Token **s_isfifo(size_t *token_count) { // piped in
-	char *buf = calloc(SIZE, sizeof(char));
-	char c;
-	size_t i = 0;
-	size_t size = SIZE;
-	while ((c = fgetc(stdin)) != EOF) {
-		buf[i] = c;
-		++i;
-		if (i >= size) {
-			size *= 2;
-			buf = realloc(buf, size);
-		}
-	}
-	Token **tokens = lex(buf, i, token_count);
-	free(buf);
-	return tokens;
-}
-
-
-Token **s_ischr(size_t *token_count) { // REPL - needs to be called in a loop
-	char *buf = calloc(SIZE, sizeof(char));
-	size_t size = SIZE;
-	char c;
-	size_t i = 0;
-	while ((c = fgetc(stdin)) != '\n') {
-		if (c == EOF) {
-			exit(0);
-		}
-		buf[i] = c;
-		++i;
-		if (i >= size) {
-			size *= 2;
-			buf = realloc(buf, size);
-		}
-	}
-	Token **tokens = lex(buf, i, token_count);
-	free(buf);
-	return tokens;
-
-}
-
-Token **s_isreg(size_t *token_count) { // file directed as stdin, eg ./a.out < file
-	fseek(stdin, 0, SEEK_END);
-	int size = ftell(stdin);
-	rewind(stdin);
-	char *buf = calloc(size, sizeof(char));
-	fread(buf, sizeof(char), size, stdin);
-	Token **tokens = lex(buf, size, token_count);
-	free(buf);
-	return tokens;
-}
-
-Token **w_args(int argc, char **argv, size_t *token_count) {
-	char *buf = calloc(SIZE, sizeof(char));
-	char *arg;
-	size_t i = 0;
-	size_t size = SIZE;
-	while (arg = shift(&argc, &argv)) {
-		while ( *arg != '\0') {
-			buf[i] = *arg;
-			++i;
-			arg += 1;
-			if (i+1 >= size) {
+			if (i >= size) {
 				size *= 2;
 				buf = realloc(buf, size);
 			}
 		}
-		buf[i] = ' ';
-		++i;		
+		*buf_counter = i;
+		buf = realloc(buf, i);
+	} else {
+		fprintf(stderr, "%s:%d: [ERROR]: bufferizing failed: unsupported stream provided to tokenizer\n", __FILE__, __LINE__);
+		exit(1);
 	}
-	Token **tokens = lex(buf, i, token_count);
+	return buf;		
+}
+
+lex_token **tokenize(FILE *stream, size_t *token_counter) {
+	if (LEX_TOKEN_COUNT != sizeof(LEX_TOKEN_NAMES)/sizeof(*LEX_TOKEN_NAMES)) {
+		return NULL;
+	}
+	size_t buf_counter = 0;
+	char *buf = bufferize(stream, &buf_counter);
+	if (buf == NULL) {
+		fprintf(stderr, "%s:%d: [ERROR]: tokenizing failed: bufferizer returned NULL buffer\n",__FILE__, __LINE__);
+		exit(1);
+	} 
+
+	int row = 1;
+	int col = 1;
+	size_t tok_count = 0;
+	size_t str_size = LEX_SIZE;
+	lex_token **tokens = calloc(buf_counter, sizeof(lex_token *));
+	for (int i = 0; i<buf_counter; ++i) {
+		lex_token *new = calloc(1, sizeof(lex_token));
+		char *val = calloc(str_size, sizeof(char));
+		new->fname = LEX_FNAME;
+		new->row = row;
+		new->col = col;
+		char b_i = buf[i];
+		int vlen = 0;
+		if (b_i == '"') { // handle string
+			new->t = LEX_STRING;
+			++i;
+			++col;
+			int j = 0;
+			int escaped = 0;
+			while (i < buf_counter && ((b_i = buf[i]) != '"' || b_i == '"' && escaped)) {
+				val[j] = b_i;
+				++j;
+				++i;
+				++col;
+				if (j >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+				int is_slash = b_i == '\\';
+				escaped = is_slash * (is_slash ^ escaped);
+			}
+			val = realloc(val, j);
+			vlen = j;
+		} else if (b_i == '\'') { // handle char
+			new->t = LEX_CHAR;
+			++i;
+			++col;
+			int j = 0;
+			int escaped = 0;
+			while (i < buf_counter && ((b_i = buf[i]) != '\'' || b_i == '\'' && escaped)) {
+				val[j] = b_i;
+				++j;
+				++i;
+				++col;
+				if (j >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+				int is_slash = b_i == '\\';
+				escaped = is_slash * (is_slash ^ escaped);
+			}
+			val = realloc(val, j);
+			vlen = j;
+		} else if (b_i >= 'A' && b_i <= 'Z' || b_i >= 'a' && b_i <= 'z') { // handle word
+			val[0] = b_i;
+			int j = 1;
+			++i;
+			++col;
+			while (i < buf_counter && ((b_i = buf[i]) >= 'a' && b_i <= 'z' || b_i >= 'A' && b_i <= 'Z' || b_i == '-' || b_i == '_' || b_i >= '0' && b_i <= '9')) {
+				val[j] = b_i;
+				++j;
+				++i;
+				++col;
+				if (i >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+			}
+			val = realloc(val, j);
+			vlen = j;
+			--i;
+			--col;
+		} else if (b_i >= '0' && b_i <= '9') { // handle int
+			new->t = LEX_INT;
+			++i;
+			++col;
+			val[0] = b_i;
+			int j = 1;
+			while ((b_i = buf[i]) >= '0' && b_i <= '9') {
+				val[j] = b_i;
+				++i;
+				++col;
+				++j;
+			}
+			--i;
+			--col;
+			val = realloc(val, j);
+			vlen = j;
+		} else { // handle symbol
+			new->t = LEX_SYMBOL;
+			val[0] = b_i;
+			if (b_i == '\n') {
+				col = 1;
+				++row;
+			} else {
+				++col;
+			}
+			val = realloc(val, 1);
+			vlen = 1;
+		}
+		new->v = val;
+		new->vlen = vlen;
+		tokens[tok_count] = new;
+		++tok_count;
+	}
+	*token_counter = tok_count;
+	// print(tokens, tok_count);
 	free(buf);
 	return tokens;
 }
 
-Token **file(char *filename, size_t *token_count) { // file from filename
-        FILE *fptr = fopen(filename, "r");
-	if (fptr == NULL) {
-		return NULL;
-	}
-        fseek(fptr, 0, SEEK_END);
-        int size = ftell(fptr);
-        rewind(fptr);
-        char *buf = calloc(size, sizeof(char));
-        fread(buf, sizeof(char), size, fptr);
-        fclose(fptr);
-        Token **tokens = lex(buf, size, token_count);
-        free(buf);
-	return tokens;
-}
-
-#endif // LEX_IMPLEMETATION
+#endif // LEX_IMPLEMENTATION
