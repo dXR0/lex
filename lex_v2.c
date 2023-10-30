@@ -219,9 +219,21 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 				++col;
 				++j;
 			}
+			--i;
+			--col;
 			val = realloc(val, j);
 			vlen = j;
 		} else { // handle symbol
+			new->t = LEX_SYMBOL;
+			val[0] = b_i;
+			if (b_i == '\n') {
+				col = 1;
+				++row;
+			} else {
+				++col;
+			}
+			val = realloc(val, 1);
+			vlen = 1;
 		}
 		new->v = val;
 		new->vlen = vlen;
