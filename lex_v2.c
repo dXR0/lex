@@ -81,7 +81,7 @@ typedef struct {
 	int col;
 } lex_token;
 
-void lex_free_tokens(lex_token **tokens, size_t n);
+void lex_free(lex_token **tokens, size_t n);
 lex_token **tokenize(FILE *stream, size_t *token_counter);
 
 
@@ -97,7 +97,7 @@ lex_token **tokenize(FILE *stream, size_t *token_counter);
 char *LEX_FNAME = "stdin";
 
 
-void lex_free_tokens(lex_token **tokens, size_t n) {
+void lex_free(lex_token **tokens, size_t n) {
 	for (int i=0; i<n; ++i) {
 		free(tokens[i]->v);
 		free(tokens[i]);
@@ -207,6 +207,24 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 			val = realloc(val, j);
 			vlen = j;
 		} else if (b_i >= 'A' && b_i <= 'Z' || b_i >= 'a' && b_i <= 'z') { // handle word
+			val[0] = b_i;
+			int j = 1;
+			++i;
+			++col;
+			while (i < buf_counter && ((b_i = buf[i]) >= 'a' && b_i <= 'z' || b_i >= 'A' && b_i <= 'Z' || b_i == '-' || b_i == '_' || b_i >= '0' && b_i <= '9')) {
+				val[j] = b_i;
+				++j;
+				++i;
+				++col;
+				if (i >= str_size) {
+					str_size *= 2;
+					val = realloc(val, str_size);
+				}
+			}
+			val = realloc(val, j);
+			vlen = j;
+			--i;
+			--col;
 		} else if (b_i >= '0' && b_i <= '9') { // handle int
 			new->t = LEX_INT;
 			++i;
@@ -251,7 +269,8 @@ int main(int argc, char **argv) {
 	char *fname = "test.txt";
 	FILE *fptr = fopen(fname, "r");
 	LEX_FNAME=fname;
-	tokenize(fptr, &token_counter);
+	lex_token **tokens = tokenize(fptr, &token_counter);
 	fclose(fptr);
+	lex_free(tokens, token_counter);
 }
 

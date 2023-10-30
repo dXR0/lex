@@ -9,3 +9,10 @@
 123
 123.12
 123.123.123
+word
+word.
+word.String()
+snake_case
+camelCase
+hypen-word
+UPPERCASE
