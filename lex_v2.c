@@ -1,6 +1,9 @@
 #pragma once
-// #ifndef TOOLBOXC_H_
-// #define TOOLBOXC_H_
+
+#define LEX_IMPLEMENTATION // TODO: rm
+
+#ifndef TOOLBOXC_H_
+#define TOOLBOXC_H_
 
 #include <stdio.h>
 
@@ -8,10 +11,10 @@ char *shift(int *argc, char ***argv);
 size_t mystrlen(char *s1);
 int mystrcomp(char *s1, char *s2);
 
-// #endif // TOOLBOXC_H_
+#endif // TOOLBOXC_H_
 
-// #ifndef TOOLBOXC_IMPLEMENTATION
-// #define TOOLBOXC_IMPLEMENTATION
+#ifndef TOOLBOXC_IMPLEMENTATION
+#define TOOLBOXC_IMPLEMENTATION
 
 #include <stdio.h>
 
@@ -47,17 +50,15 @@ int mystrcomp(char *s1, char *s2) {
 	return *s1c == *s2c;
 }
 
-// #endif TOOLBOXC_IMPLEMENTATION
+#endif // TOOLBOXC_IMPLEMENTATION
 
-// #ifndef LEX_H_
-// #define LEX_H_
+#ifndef LEX_H_
+#define LEX_H_
 
 enum LEX_TOKEN_TYPE {
 	LEX_SYMBOL = 0,
 	LEX_WORD,
 	LEX_INT,
-	LEX_FLOAT,
-	LEX_NUMBER,
 	LEX_CHAR,
 	LEX_STRING,
 	LEX_TOKEN_COUNT
@@ -67,8 +68,6 @@ static const char *LEX_TOKEN_NAMES[] = {
 	"SYMBOL",
 	"WORD",
 	"INT",
-	"FLOAT",
-	"NUMBER",
 	"CHAR",
 	"STRING"
 };
@@ -86,10 +85,9 @@ void lex_free_tokens(lex_token **tokens, size_t n);
 lex_token **tokenize(FILE *stream, size_t *token_counter);
 
 
-// #endif // LEX_H_
+#endif // LEX_H_
 
-// #ifndef LEX_IMPLEMENTATION
-// #define LEX_IMPLEMENTATION
+#ifdef LEX_IMPLEMENTATION
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -209,7 +207,20 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 			val = realloc(val, j);
 			vlen = j;
 		} else if (b_i >= 'A' && b_i <= 'Z' || b_i >= 'a' && b_i <= 'z') { // handle word
-		} else if (b_i >= '0' && b_i <= '9') { // handle int/float/number
+		} else if (b_i >= '0' && b_i <= '9') { // handle int
+			new->t = LEX_INT;
+			++i;
+			++col;
+			val[0] = b_i;
+			int j = 1;
+			while ((b_i = buf[i]) >= '0' && b_i <= '9') {
+				val[j] = b_i;
+				++i;
+				++col;
+				++j;
+			}
+			val = realloc(val, j);
+			vlen = j;
 		} else { // handle symbol
 		}
 		new->v = val;
@@ -221,6 +232,8 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 	free(buf);
 }
 
+#endif // LEX_IMPLEMENTATION
+
 int main(int argc, char **argv) {
 	size_t token_counter = 0;
 	char *fname = "test.txt";
@@ -230,4 +243,3 @@ int main(int argc, char **argv) {
 	fclose(fptr);
 }
 
-// #endif // LEX_IMPLEMENTATION
