@@ -1,57 +1,9 @@
 #pragma once
 
-#ifndef TOOLBOXC_H_
-#define TOOLBOXC_H_
-
-#include <stdio.h>
-
-char *shift(int *argc, char ***argv);
-size_t mystrlen(char *s1);
-int mystrcomp(char *s1, char *s2);
-
-#endif // TOOLBOXC_H_
-
-#ifndef TOOLBOXC_IMPLEMENTATION
-#define TOOLBOXC_IMPLEMENTATION
-
-#include <stdio.h>
-
-char *shift(int *argc, char ***argv) {
-	if (*argc <= 0) {
-		return NULL;
-	}
-	char *result = **argv;
-	*argc -= 1;
-	*argv += 1;
-	return result;
-}
-
-size_t mystrlen(char *s1) {
-	char *s1c = s1;
-	size_t size = 0;
-	while (*(s1c++) != '\0') {
-		++size;
-	}
-	return size;
-}
-
-int mystrcomp(char *s1, char *s2) {
-	char *s1c = s1;
-	char *s2c = s2;
-	while (*s1c != '\0' && *s2c != '\0') {
-		if (*s1c != *s2c) {
-			break;
-		}
-		++s1c;
-		++s2c;
-	}
-	return *s1c == *s2c;
-}
-
-#endif // TOOLBOXC_IMPLEMENTATION
-
 #ifndef LEX_H_
 #define LEX_H_
+
+#include <stdio.h>
 
 enum LEX_TOKEN_TYPE {
 	LEX_SYMBOL = 0,
@@ -85,18 +37,15 @@ void print(lex_token **token, int token_count);
 char *bufferize(FILE *stream, size_t *buf_counter);
 lex_token **tokenize(FILE *stream, size_t *token_counter);
 
-
 #endif // LEX_H_
 
 #ifdef LEX_IMPLEMENTATION
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
 #define LEX_SIZE 256
 char *LEX_FNAME = "stdin";
-
 
 void lex_free(lex_token **tokens, size_t n) {
 	for (int i=0; i<n; ++i) {
@@ -107,7 +56,7 @@ void lex_free(lex_token **tokens, size_t n) {
 }
 
 void string(lex_token *token) {
-		printf("%s:%d:%d %s(%s)(%d)\n", token->fname, token->row, token->col, LEX_TOKEN_NAMES[token->t], token->v, token->vlen);
+	printf("%s:%d:%d %s(%s)(%d)\n", token->fname, token->row, token->col, LEX_TOKEN_NAMES[token->t], token->v, token->vlen);
 }
 
 void print(lex_token **token, int token_count) {
@@ -260,7 +209,6 @@ lex_token **tokenize(FILE *stream, size_t *token_counter) {
 		++tok_count;
 	}
 	*token_counter = tok_count;
-	// print(tokens, tok_count);
 	free(buf);
 	return tokens;
 }
